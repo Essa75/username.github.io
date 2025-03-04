@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متابعة حركة الخزينة</title>
+    <style>
+        /* كل الأنماط تبقى كما هي مع تعديل الألوان */
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            text-align: right;
+            margin: 10px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 100%;
+            margin: auto;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .author {
+            font-size: 18px;
+            color: green;
+            font-weight: bold;
+        }
+        .balances {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 10px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .debt-box {
+            background-color: #fff3cd;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .category-summary {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+            word-break: break-word;
+        }
+        th {
+            background-color: #f4f4f4;
+            font-weight: bold;
+        }
+        tr.green td { background-color: #d4edda !important; }
+        tr.red td { background-color: #f8d7da !important; }
+        tr.yellow td { background-color: #fff3cd !important; }
+        input, select {
+            padding: 6px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .form-row label {
+            flex: 1;
+        }
+        #bill1, #bill5, #bill10, #bill20, #bill50 {
+            text-align: left;
+            direction: ltr;
+            width: 80px;
+            font-size: 12px;
+            padding: 4px;
+        }
+        #amount { 
+            width: 120px; 
+            background-color: #f0f0f0;
+            direction: ltr;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            .balances {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            table th, table td {
+                font-size: 12px;
+                padding: 6px;
+            }
+            button {
+                font-size: 12px;
+            }
+            .header h2 {
+                font-size: 18px;
+            }
+            .author {
+                font-size: 16px;
+            }
+            .form-row {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>متابعة حركة الخزينة اليومية</h2>
+            <div class="author">إعداد : م عيسى الزروق</div>
+        </div>
+        <div class="balances">
+            <h3>الرصيد الكلي: <span id="totalBalance">0</span></h3>
+            <div class="debt-box">
+                <h3>إجمالي الدين: <span id="totalDebt">0</span></h3>
+            </div>
+        </div>
+        <div class="category-summary">
+            <h3>دينار: <span id="category1">0</span></h3>
+            <h3>خمسات: <span id="category5">0</span></h3>
+            <h3>عشرات: <span id="category10">0</span></h3>
+            <h3>عشرينات: <span id="category20">0</span></h3>
+            <h3>خمسينات: <span id="category50">0</span></h3>
+        </div>
+        <form id="cashForm">
+            <div class="form-row">
+                <label>التاريخ: 
+                    <input type="date" id="date" required>
+                </label>
+                <label>الحركة:
+                    <select id="transactionType" onchange="changeTransactionColor()">
+                        <option value="دخول">دخول</option>
+                        <option value="خروج">خروج</option>
+                        <option value="دين">دين</option>
+                    </select>
+                </label>
+                <label>الاسم:
+                    <input list="accountantNames" id="accountantCustomer" placeholder="أدخل أو اختر اسمًا" required>
+                    <datalist id="accountantNames"></datalist>
+                </label>
+            </div>
+            <table>
+                <tr>
+                    <th>دينار</th>
+                    <th>خمسات</th>
+                    <th>عشرات</th>
+                    <th>عشرينات</th>
+                    <th>خمسينات</th>
+                    <th>القيمة</th>
+                </tr>
+                <tr>
+                    <td><input type="text" id="bill1" oninput="formatInputNumber(this)"></td>
+                    <td><input type="text" id="bill5" oninput="formatInputNumber(this)"></td>
+                    <td><input type="text" id="bill10" oninput="formatInputNumber(this)"></td>
+                    <td><input type="text" id="bill20" oninput="formatInputNumber(this)"></td>
+                    <td><input type="text" id="bill50" oninput="formatInputNumber(this)"></td>
+                    <td><input type="text" id="amount" readonly></td>
+                </tr>
+            </table>
+            <label>ملاحظات: <input type="text" id="notes"></label>
+            <div class="button-group">
+                <button type="button" onclick="confirmUpdate()">إضافة/تحديث</button>
+                <button type="button" onclick="clearFields()">مسح الحقول</button>
+                <button type="button" onclick="sendWhatsAppReport()">📤 إرسال تقرير</button>
+            </div>
+        </form>
+        <table id="recordsTable">
+            <thead>
+                <tr>
+                    <th>التاريخ</th>
+                    <th>الحركة</th>
+                    <th>الاسم</th>
+                    <th>القيمة</th>
+                    <th>دينار</th>
+                    <th>خمسات</th>
+                    <th>عشرات</th>
+                    <th>عشرينات</th>
+                    <th>خمسينات</th>
+                    <th>الملاحظات</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+    <script>
+        let totalBalance = 0;
+        let totalDebt = 0;
+        let sumEntered = {
+            "1": 0,
+            "5": 0,
+            "10": 0,
+            "20": 0,
+            "50": 0
+        };
+
+        let editingRow = null;
+
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        function parseFormattedNumber(str) {
+            return parseInt(str.replace(/,/g, '')) || 0;
+        }
+
+        function formatInputNumber(input) {
+            let value = input.value.replace(/,/g, '');
+            if (!isNaN(value)) {
+                input.value = formatNumber(value);
+                calculateAmount();
+            }
+        }
+
+        function calculateAmount() {
+            const bill1 = parseFormattedNumber(document.getElementById("bill1").value);
+            const bill5 = parseFormattedNumber(document.getElementById("bill5").value);
+            const bill10 = parseFormattedNumber(document.getElementById("bill10").value);
+            const bill20 = parseFormattedNumber(document.getElementById("bill20").value);
+            const bill50 = parseFormattedNumber(document.getElementById("bill50").value);
+
+            const total = bill1 + bill5 + bill10 + bill20 + bill50;
+            document.getElementById("amount").value = formatNumber(total);
+        }
+
+        function validateForm() {
+            const date = document.getElementById("date").value;
+            const name = document.getElementById("accountantCustomer").value;
+            
+            if (!date || !name) {
+                alert("يجب إدخال التاريخ والاسم قبل الإضافة");
+                return false;
+            }
+            return true;
+        }
+
+        function confirmUpdate() {
+            if (!validateForm()) return;
+            
+            const isNew = !editingRow;
+            const msg = isNew 
+                ? "هل تريد إضافة هذا الإدخال الجديد؟" 
+                : "هل تريد تحديث البيانات؟";
+            
+            if (confirm(msg)) {
+                addRecord();
+                clearFields();
+            }
+        }
+
+        function addRecord() {
+            const date = document.getElementById("date").value;
+            const transactionType = document.getElementById("transactionType").value;
+            const accountantCustomer = document.getElementById("accountantCustomer").value;
+            const amount = parseFormattedNumber(document.getElementById("amount").value);
+            const notes = document.getElementById("notes").value;
+
+            const bill1 = parseFormattedNumber(document.getElementById("bill1").value);
+            const bill5 = parseFormattedNumber(document.getElementById("bill5").value);
+            const bill10 = parseFormattedNumber(document.getElementById("bill10").value);
+            const bill20 = parseFormattedNumber(document.getElementById("bill20").value);
+            const bill50 = parseFormattedNumber(document.getElementById("bill50").value);
+
+            if (editingRow) {
+                const oldAmount = parseFormattedNumber(editingRow.cells[3].textContent);
+                const oldType = editingRow.cells[1].textContent;
+                
+                updateTotals(oldType, -parseFormattedNumber(editingRow.cells[4].textContent), 
+                            -parseFormattedNumber(editingRow.cells[5].textContent),
+                            -parseFormattedNumber(editingRow.cells[6].textContent),
+                            -parseFormattedNumber(editingRow.cells[7].textContent),
+                            -parseFormattedNumber(editingRow.cells[8].textContent),
+                            -oldAmount);
+
+                editingRow.cells[0].textContent = date;
+                editingRow.cells[1].textContent = transactionType;
+                editingRow.cells[2].textContent = accountantCustomer;
+                editingRow.cells[3].textContent = formatNumber(amount);
+                editingRow.cells[4].textContent = formatNumber(bill1);
+                editingRow.cells[5].textContent = formatNumber(bill5);
+                editingRow.cells[6].textContent = formatNumber(bill10);
+                editingRow.cells[7].textContent = formatNumber(bill20);
+                editingRow.cells[8].textContent = formatNumber(bill50);
+                editingRow.cells[9].textContent = notes;
+                editingRow.className = transactionType === 'دخول' ? 'green' : transactionType === 'خروج' ? 'red' : 'yellow';
+            } else {
+                const newRow = `<tr class="${transactionType === 'دخول' ? 'green' : transactionType === 'خروج' ? 'red' : 'yellow'}">
+                    <td>${date}</td>
+                    <td>${transactionType}</td>
+                    <td>${accountantCustomer}</td>
+                    <td>${formatNumber(amount)}</td>
+                    <td>${formatNumber(bill1)}</td>
+                    <td>${formatNumber(bill5)}</td>
+                    <td>${formatNumber(bill10)}</td>
+                    <td>${formatNumber(bill20)}</td>
+                    <td>${formatNumber(bill50)}</td>
+                    <td>${notes}</td>
+                </tr>`;
+                document.getElementById("tableBody").insertAdjacentHTML('afterbegin', newRow);
+            }
+
+            updateTotals(transactionType, bill1, bill5, bill10, bill20, bill50, amount);
+            updateDisplay();
+        }
+
+        function updateTotals(type, b1, b5, b10, b20, b50, amt) {
+            if (type === "دخول") {
+                sumEntered["1"] += b1;
+                sumEntered["5"] += b5;
+                sumEntered["10"] += b10;
+                sumEntered["20"] += b20;
+                sumEntered["50"] += b50;
+                totalBalance += amt;
+            } else {
+                sumEntered["1"] -= b1;
+                sumEntered["5"] -= b5;
+                sumEntered["10"] -= b10;
+                sumEntered["20"] -= b20;
+                sumEntered["50"] -= b50;
+                totalBalance -= amt;
+                if (type === "دين") totalDebt += amt;
+            }
+        }
+
+        function updateDisplay() {
+            document.getElementById("totalBalance").textContent = formatNumber(totalBalance);
+            document.getElementById("totalDebt").textContent = formatNumber(totalDebt);
+            document.getElementById("category1").textContent = formatNumber(sumEntered["1"]);
+            document.getElementById("category5").textContent = formatNumber(sumEntered["5"]);
+            document.getElementById("category10").textContent = formatNumber(sumEntered["10"]);
+            document.getElementById("category20").textContent = formatNumber(sumEntered["20"]);
+            document.getElementById("category50").textContent = formatNumber(sumEntered["50"]);
+        }
+
+        function sendWhatsAppReport() {
+            const report = `تقرير الخزينة:
+الرصيد الكلي: ${formatNumber(totalBalance)}
+الدين الإجمالي: ${formatNumber(totalDebt)}
+الفئات المتاحة:
+- دينار: ${formatNumber(sumEntered["1"])}
+- خمسات: ${formatNumber(sumEntered["5"])}
+- عشرات: ${formatNumber(sumEntered["10"])}
+- عشرينات: ${formatNumber(sumEntered["20"])}
+- خمسينات: ${formatNumber(sumEntered["50"])}`;
+
+            window.open(`https://wa.me/?text=${encodeURIComponent(report)}`);
+        }
+
+        function clearFields() {
+            document.getElementById("cashForm").reset();
+            document.getElementById("date").value = new Date().toISOString().split('T')[0];
+            document.getElementById("amount").value = "";
+            document.getElementById("bill1").value = "";
+            document.getElementById("bill5").value = "";
+            document.getElementById("bill10").value = "";
+            document.getElementById("bill20").value = "";
+            document.getElementById("bill50").value = "";
+            editingRow = null;
+        }
+
+        document.getElementById("date").value = new Date().toISOString().split('T')[0];
+        document.getElementById("tableBody").addEventListener("click", function(e) {
+            const row = e.target.closest("tr");
+            if (!row) return;
+            
+            editingRow = row;
+            document.getElementById("date").value = row.cells[0].textContent;
+            document.getElementById("transactionType").value = row.cells[1].textContent;
+            document.getElementById("accountantCustomer").value = row.cells[2].textContent;
+            document.getElementById("amount").value = parseFormattedNumber(row.cells[3].textContent);
+            document.getElementById("bill1").value = parseFormattedNumber(row.cells[4].textContent);
+            document.getElementById("bill5").value = parseFormattedNumber(row.cells[5].textContent);
+            document.getElementById("bill10").value = parseFormattedNumber(row.cells[6].textContent);
+            document.getElementById("bill20").value = parseFormattedNumber(row.cells[7].textContent);
+            document.getElementById("bill50").value = parseFormattedNumber(row.cells[8].textContent);
+            document.getElementById("notes").value = row.cells[9].textContent;
+        });
+
+        function changeTransactionColor() {
+            const type = document.getElementById("transactionType").value;
+            const select = document.getElementById("transactionType");
+            select.style.backgroundColor = 
+                type === "دخول" ? "#d4edda" :
+                type === "خروج" ? "#f8d7da" : "#fff3cd";
+        }
+    </script>
+</body>
+</html>
